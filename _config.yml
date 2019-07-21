@@ -78,4 +78,8 @@ theme: apollo
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
-  type:
+  type: git
+  repo: https://{GITHUB_TOKEN}@github.com/YanWQ-monad/YanWQ-monad.github.io.git
+  branch: master
+  name: YanWQ-monad
+  email: YanWQmonad@gmail.com
