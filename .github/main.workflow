@@ -9,10 +9,8 @@ action "npm install" {
 }
 
 action "hexo generate" {
-  uses = "docker://node"
+  uses = "./.github/generate"
   needs = ["npm install"]
-  runs = "npx"
-  args = "hexo generate"
 }
 
 action "filter branch blog" {
