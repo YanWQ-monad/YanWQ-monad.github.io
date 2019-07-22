@@ -81,6 +81,9 @@ pandoc:
 katex:
   css: false
 
+include:
+  - .nojekyll
+
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
@@ -89,3 +92,5 @@ deploy:
   branch: master
   name: YanWQ-monad
   email: YanWQmonad@gmail.com
+  ignore_hidden:
+    public: false
