@@ -3,6 +3,10 @@
 }
 
 .post-block {
+    .hidden {
+        display: none;
+    }
+
     .post-title {
         margin: 0.65em 0;
         color: #2c3e50;

@@ -1,5 +1,10 @@
 mixin postInfo(item)
-    .post-info
+    .hidden(itemprop="author" itemscope itemtype="http://schema.org/Person")
+        span(itemprop="name")
+            != config.author
+    .hidden(itemprop="dateModified" content=date(item.updated, 'YYYY-MM-DD'))
+        != full_date(item.updated, 'll')
+    .post-info(itemprop="datePublished" content=date(item.date, 'YYYY-MM-DD'))
         != full_date(item.date, 'll')
         if item.from && (is_home() || is_post())
             a.post-from(href=item.from target="_blank" title=item.from)!= __('translated')
@@ -40,9 +45,9 @@ mixin postList()
 //- Post Page
 mixin post(item)
     .post
-        article.post-block
-            h1.post-title
+        article.post-block(itemscope itemtype="http://schema.org/Article")
+            h1.post-title(itemprop="name")
                 != item.title
             +postInfo(item)
-            .post-content
+            .post-content(itemprop="articleBody")
                 != item.content
