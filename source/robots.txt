@@ -1,0 +1,11 @@
+# F**k baidu
+user-agent: Baiduspider
+disallow: /
+
+user-agent: *
+disallow: /categories
+disallow: /archives
+disallow: /page
+disallow: /$
+allow: /
+sitemap: https://blog.monadx.com/sitemap.xml
