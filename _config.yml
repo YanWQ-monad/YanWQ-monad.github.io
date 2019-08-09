@@ -88,7 +88,7 @@ include:
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repo: https://{GITHUB_TOKEN}@github.com/YanWQ-monad/YanWQ-monad.github.io.git
+  repo: https://YanWQ-monad:{GITHUB_TOKEN}@github.com/YanWQ-monad/YanWQ-monad.github.io.git
   branch: master
   name: YanWQ-monad
   email: YanWQmonad@gmail.com

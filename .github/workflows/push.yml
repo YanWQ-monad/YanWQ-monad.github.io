@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+    - blog
+name: Build and deploy on push
+jobs:
+  deployHexo:
+    name: DeployHexoBlog
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: npm install
+      uses: actions/npm@59b64a598378f31e49cb76f27d6f3312b582f680
+      with:
+        args: install
+    - name: hexo generate
+      uses: ./.github/generate
+    - name: hexo deploy
+      uses: ./.github/deploy
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
