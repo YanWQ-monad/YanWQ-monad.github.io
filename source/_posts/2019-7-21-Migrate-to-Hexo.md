@@ -1,5 +1,6 @@
 ---
 title: 迁移到 Hexo
+permalinks: Migrate-to-Hexo
 date: 2019/7/21
 categories:
 - 日常
