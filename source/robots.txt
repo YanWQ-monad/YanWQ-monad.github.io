@@ -5,7 +5,6 @@ disallow: /
 user-agent: *
 disallow: /categories
 disallow: /archives
-disallow: /page
-disallow: /$
+disallow: /tags
 allow: /
 sitemap: https://blog.monadx.com/sitemap.xml

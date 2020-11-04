@@ -82,6 +82,10 @@ pandoc:
 katex:
   css: false
 
+sitemap:
+  tags: false
+  categories: false
+
 include:
   - .nojekyll
 
