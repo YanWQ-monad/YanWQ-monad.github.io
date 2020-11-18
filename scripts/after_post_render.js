@@ -5,7 +5,7 @@ var cheerio;
 hexo.extend.filter.register('after_post_render', function(data) {
   if (!cheerio) cheerio = require('cheerio');
 
-  var $ = cheerio.load(data.content, { decodeEntities: true });
+  var $ = cheerio.load(data.content);
 
   $('section.footnotes[role="doc-endnotes"] > hr:first-child').remove();
 
