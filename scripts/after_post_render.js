@@ -9,6 +9,8 @@ hexo.extend.filter.register('after_post_render', function(data) {
 
   $('section.footnotes[role="doc-endnotes"] > hr:first-child').remove();
 
-  data.content = $.html();
+  // avoid adding <html><head><body>
+  // https://github.com/cheeriojs/cheerio/issues/1031#issuecomment-340608465
+  data.content = $('body').html();
   return data;
 });
