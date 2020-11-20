@@ -1,13 +1,33 @@
 'use strict';
 
-var cheerio;
+let cheerio;
 
-hexo.extend.filter.register('after_post_render', function(data) {
+function remove_footnotes_hr($, data) {
+  $('section.footnotes[role="doc-endnotes"] > hr:first-child').remove();
+}
+
+function translate_image_uri($, data) {
+  const matches = data.source.match(/_posts\/(.*)\.md/);
+  if (!matches) {
+    return;
+  }
+  const name = matches[1];
+
+  $('img').each((_, e) => {
+    const src = $(e).attr('src');
+    if (!src.startsWith('/')) {
+      $(e).attr('src', `/images/${name}/${src}`);
+    }
+  });
+}
+
+hexo.extend.filter.register('after_post_render', (data) => {
   if (!cheerio) cheerio = require('cheerio');
 
-  var $ = cheerio.load(data.content);
+  const $ = cheerio.load(data.content);
 
-  $('section.footnotes[role="doc-endnotes"] > hr:first-child').remove();
+  remove_footnotes_hr($, data);
+  translate_image_uri($, data);
 
   // avoid adding <html><head><body>
   // https://github.com/cheeriojs/cheerio/issues/1031#issuecomment-340608465
