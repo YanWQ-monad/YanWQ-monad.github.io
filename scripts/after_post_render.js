@@ -14,10 +14,20 @@ function translate_image_uri($, data) {
   const name = matches[1];
 
   $('img').each((_, e) => {
-    const src = $(e).attr('src');
-    if (!src.startsWith('/')) {
-      $(e).attr('src', `/images/${name}/${src}`);
+    let src = $(e).attr('src');
+    if (!src.startsWith('http')) {
+      src = `/images/${name}/${src}`;
     }
+
+    const $a = $('<a></a>');
+    const $img = $(e).clone();
+    $a.attr('href', src);
+    $a.addClass('glightbox');
+
+    $img.attr('src', src);
+
+    $(e).replaceWith($a);
+    $a.append($img);
   });
 }
 
