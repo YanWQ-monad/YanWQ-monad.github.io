@@ -6,3 +6,10 @@ gtm: GTM-PP344KH
 
 # Copyright Infomation
 startyear: 2017
+
+# 3rd resources
+resources:
+  js:
+    - /js/all.min.js
+  css:
+    - /css/all.min.css
