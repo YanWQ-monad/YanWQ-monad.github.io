@@ -19,6 +19,8 @@ jobs:
       with:
         node-version: '14.x'
     - run: npm install
+    - name: assemble js and css
+      run: npx gulp default
     - name: hexo generate
       uses: ./.github/generate
     - name: hexo deploy
