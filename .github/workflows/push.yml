@@ -6,23 +6,28 @@ on:
 name: Build and deploy on push
 
 jobs:
-  deployHexo:
-    name: DeployHexoBlog
+  deploy:
+    name: deploy
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: 'recursive'
+
     - name: use Node.js
       uses: actions/setup-node@v1
       with:
         node-version: '14.x'
+
     - run: npm install
+
     - name: assemble js and css
       run: npx gulp default
+
     - name: hexo generate
       uses: ./.github/generate
+
     - name: hexo deploy
       run: |
         npm install --save hexo-deployer-git
