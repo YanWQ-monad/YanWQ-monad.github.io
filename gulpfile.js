@@ -15,7 +15,9 @@ gulp.task('js', function() {
         }))
         .pipe(gulp_concat('all.js'))
         .pipe(gulp.dest('./source/js'))
-        .pipe(gulp_uglify())
+        .pipe(gulp_uglify({
+            enclose: true
+        }))
         .pipe(gulp_rename('all.min.js'))
         .pipe(gulp.dest('./source/js'));
 });
