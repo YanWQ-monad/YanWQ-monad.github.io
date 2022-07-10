@@ -34,13 +34,13 @@ function translate_image_uri($, data) {
 hexo.extend.filter.register('after_post_render', (data) => {
   if (!cheerio) cheerio = require('cheerio');
 
-  const $ = cheerio.load(data.content);
+  // avoid adding <html><head><body>
+  // https://github.com/cheeriojs/cheerio/issues/1031#issuecomment-748677236
+  const $ = cheerio.load(data.content, null, false);
 
   remove_footnotes_hr($, data);
   translate_image_uri($, data);
 
-  // avoid adding <html><head><body>
-  // https://github.com/cheeriojs/cheerio/issues/1031#issuecomment-340608465
-  data.content = $('body').html();
+  data.content = $.html();
   return data;
 });
