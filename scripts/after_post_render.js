@@ -25,6 +25,7 @@ function translate_image_uri($, data) {
     $a.addClass('glightbox');
 
     $img.attr('src', src);
+    $img.attr('loading', 'lazy');
 
     $(e).replaceWith($a);
     $a.append($img);
