@@ -46,6 +46,16 @@ date: 2022-7-11 10:00:00
   * [Not easy SQL injection](#not-easy-sql-injection)
   * [Reverse shell included](#reverse-shell-included)
   * [PHP POP](#php-pop)
+- [Week 4](#week-4)
+  * [Information](#information)
+  * [Matryoshka doll](#matryoshka-doll)
+  * [like1000](#like1000)
+  * [upper-lower case](#upper-lower-case)
+  * [WhitePages](#whitepages)
+  * [Sleuthkit Apprentice](#sleuthkit-apprentice)
+  * [m00nwalk](#m00nwalk)
+  * [weak password](#weak-password)
+  * [简单的隐写](#简单的隐写)
 
 # Week 1
 
@@ -717,3 +727,286 @@ echo serialize($o);
 ```
 
 就得到 payload `O:8:"just4fun":2:{s:5:"enter";N;s:6:"secret";R:2;}`。然后把这个 payload 扔上去，就能拿到 flag。
+
+# Week 4
+
+## Information
+
+先用二进制编辑器打开图片，然后发现文件前面有一段文本，里面有一段非常“熟悉”的编码（其实就是 base64）。
+
+![](Information_binary.png)
+
+把它提取出来，解码一下，就拿到了 flag。
+
+```
+cGljb0NURnt0aGVfbTN0YWRhdGFfMXNfbW9kaWZpZWR9
+picoCTF{the_m3tadata_1s_modified}
+```
+
+## Matryoshka doll
+
+题目名字 “Matryoshka doll” 指的是俄罗斯套娃，提示这张图里面很可能藏着另一张图片。
+
+所以来 `binwalk` 一下，果然发现了里面藏着一个 zip 压缩包。
+
+```
+$ binwalk dolls.jpg
+
+DECIMAL       HEXADECIMAL     DESCRIPTION
+--------------------------------------------------------------------------------
+0             0x0             PNG image, 594 x 1104, 8-bit/color RGBA, non-interlaced
+3226          0xC9A           TIFF image data, big-endian, offset of first image directory: 8
+272492        0x4286C         Zip archive data, at least v2.0 to extract, compressed size: 378942, uncompressed size: 383937, name: base_images/2_c.jpg
+651600        0x9F150         End of Zip archive, footer length: 22
+```
+
+并且这个压缩包里面还有一个文件 2_c.jpg。于是我们用 `binwalk dolls.jpg -e` 把里面藏着的东西 **E**xtract 出来。
+
+然后发现 2_c.jpg 似乎跟原图差不多。考虑到题目的名字指俄罗斯套娃，那…肯定还要继续拆。
+
+用上面的方法，可以从 2_c.jpg 中拆出 3_c.jpg，然后继续从 3_c.jpg 拆出 4_c.jpg。然后从 4_c.jpg 继续拆，就发现得到的不是图片了，而是一个 flag.txt，这个文件里面的内容就是 flag。
+
+## like1000
+
+下载附件 1000.tar，然后解压一下，得到：
+
+```
+1000
+├── 999.tar
+└── filler.txt
+```
+
+这里面的 filler.txt 里面只有一些乱七八糟的内容。然后如果把 999.tar 继续解压，就会得到类似的内容（filler.txt 和 998.tar）。然后这样一直拆下去，拆到 1.tar 就应该能拿到 flag。
+
+不过这样的话，手动解压 1000 次也太麻烦了，而且很慢。所以我们可以写一个脚本，帮忙解压：
+
+``` python
+import os
+
+for i in range(1000, 0, -1):
+    os.system(f'tar xf tar_temp/{i}.tar --directory tar_temp')
+    os.system(f'rm tar_temp/{i}.tar')
+```
+
+把 1000.tar 放到 tar_temp 目录里面，然后跑一下这个脚本，它就会帮忙一层层地解压。解压到最后，tar_temp 里面的文件就剩下 filler.txt 和 flag.png。打开 flag.png，把 flag 抄下来即可。
+
+## upper-lower case
+
+> 题面按照真实事件改编。
+
+题面很简单，就是将 `y0u_re4lly_kn0w_th1s_congr4tulat10ns` 中的字母正确地大小写，使得其 MD5 等于 `7513209051f455fa44d0fa5cd0f3e051`。
+
+数一下，这个字符串中有 25 个字母，所以一共有 $2^{25} \approx 3 \times 10^7$ 种可能。这个数量级，其实不是很大，可以考虑暴力全都试一遍。
+
+``` rust
+use itertools::Itertools;
+use md5::{Digest, Md5};
+use hex_literal::hex;
+
+fn main() {
+    let product = (0..25).map(|_| [false, true].into_iter()).multi_cartesian_product();
+    for combination in product {
+        let mut mask_iter = combination.into_iter();
+        let string: Vec<_> = "y0u_re4lly_kn0w_th1s_congr4tulat10ns".bytes()
+            .map(|ch| if ch.is_ascii_alphabetic() && mask_iter.next().unwrap() {
+                ch.to_ascii_uppercase()
+            } else {
+                ch
+            })
+            .collect();
+
+        if Md5::digest(&string)[..] == hex!("7513209051f455fa44d0fa5cd0f3e051") {
+            println!("{}", std::str::from_utf8(&string).unwrap());
+        }
+    }
+}
+```
+
+然后跑一遍这玩意，就能拿到 flag 了。
+
+## WhitePages
+
+首先先直接打开这个文件，然后经过观察，不难发现这个文件里面有两种字符：`U+2003` 和 ` `。
+
+![](Whitepages_1.png)
+
+`U+2003` 查了一下，也是空格的一种。所以这个文件里面由两种空格组成。
+
+遂考虑二进制。我们不妨把 `U+2003` 改成 `0`，把 ` `（空格）改成 `1`，然后用二进制解码一下，就得到了 flag。
+
+![](Whitepages_2.png)
+
+## Sleuthkit Apprentice
+
+下载下来是一个 disk.flag.img.gz 文件，首先当然是解压一下，拿到 disk.flag.img。
+
+> 如果不想那么麻烦的话，理论上用 Disk Genius 等硬盘管理软件打开，然后直接翻文件应该也是可以的。
+
+用 `fdisk` 看看里面有啥分区：
+
+```
+$ fdisk disk.flag.img 
+
+Welcome to fdisk (util-linux 2.31.1).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+
+Command (m for help): p       
+Disk disk.flag.img: 300 MiB, 314572800 bytes, 614400 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x7389e82d
+
+Device         Boot  Start    End Sectors  Size Id Type
+disk.flag.img1 *      2048 206847  204800  100M 83 Linux
+disk.flag.img2      206848 360447  153600   75M 82 Linux swap / Solaris
+disk.flag.img3      360448 614399  253952  124M 83 Linux
+
+Command (m for help): q
+
+```
+
+实践表明，第一个分区里面没有，第二个是交换分区也不太可能，于是直接看第三个分区。
+
+第三个分区的起始位置是 360448（单位是 sectors），然后换算成 byte 就是 184549376。然后就可以用 `mount` 挂载这个分区了：
+
+``` bash
+$ sudo mount -o loop,offset=184549376 disk.flag.img /mnt
+```
+
+挂载完之后，就可以在 `/mnt` 下面翻文件了。经过一通尝试之后，发现 flag 在 `/root/my_folder/flag.uni.txt` 里面，`cat` 一下即可。
+
+## m00nwalk
+
+听一下音频，有点像 SSTV 的信号。可以用 [RX-SSTV](https://www.qsl.net/on6mu/rxsstv.htm) 接收并解析。
+
+首先先安装一个 [Virtual Audio Cable](https://vac.muzychenko.net/en/download.htm)（Lite 版本就行），用来把 wav 的音频输出重定向回输入，才能被 RX-SSTV 收到。
+
+然后打开 RX-SSTV，再播放 message.wav，RX-SSTV 就会自动的设置好模式开始接收这张图片。
+
+![](m00nwalk_SSTV.png)
+
+接收完之后，就拿到了这张图片：
+
+![](m00nwalk_image.png)
+
+把这张图片倒过来，把里面的 flag 抄下来就行了。
+
+## weak password
+
+### 解压 zip 文件
+
+zip 文件下载下来之后，发现它是有密码的。然后题面写着密码是 “five-byte printable characters”，即 5 位的可打印字符。这里用 John the Ripper 来破解密码。
+
+首先先用 `zip2john` 把 zip 转成 John 能处理的 hash：
+
+``` bash
+$ zip2john xxxtentacion.zip > zip.hashes
+```
+
+然后需要写一个密码字典生成器，让 John 针对性地破解。
+
+``` python
+import string
+import itertools
+
+for s in itertools.product(string.printable[:-5], repeat=5):
+    print(''.join(s))
+```
+
+然后我们就可以用 John 破解了。
+
+下面这句命令的意思是，让 `gen.py` 把字典打印到标准输出，然后重定向到 `john`。然后 `john` 用 `--pipe` 参数让它从标准输入读取密码字典。
+
+```
+$ python3 gen.py | john zip.hashes --pipe
+Using default input encoding: UTF-8
+Loaded 1 password hash (PKZIP [32/64])
+Press Ctrl-C to abort, or send SIGUSR1 to john process for status
+61f@X            (xxxtentacion.zip/xxxtentacion/xxxtentacion.jpg)
+1g 0:00:04:21  0.003828g/s 1874Kp/s 1874Kc/s 1874KC/s 61f;q..61f@!
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed
+```
+
+~~看了下 CPU 占用，瓶颈居然在 Python 生成字典上。~~
+
+然后就破解出 zip 的密码：`61f@X`。用这个密码解压 zip，就得到了一张 xxxtentacion.jpg 图片。
+
+### 解一层文件隐藏
+
+~~众所周知，jpg 是不能做 LSB 隐写的，因为 jpg 的有损压缩会破坏 LSB。~~
+
+用二进制编辑器打开 xxxtentacion.jpg，然后发现这个文件的后面有一串非常熟悉的编码（其实还是 base64）。
+
+![](Weak_Password_jpg_hidden.png)
+
+把这段内容复制出来，用 base64 解码一下：
+
+![](Weak_Password_base64_decode.png)
+
+这里发现了一个 PNG 的文件头，把它保存下来，后缀名改成 `.png`，就可以得到一张图片：
+
+![](Weak_Password_qrcode_raw.png)
+
+### 二维码
+
+简单观察一下这张图，就发现它非常地“二维码”。根据二维码的格式，这张图应该先反色一下（根据右下角那个定位点），然后再把三个角修好，就得到了一个真正的二维码：
+
+![](Weak_Password_qrcode.png)
+
+扫描一下，得到 `6C75652C20666172206578636565647320796F75722062656C6965667D`。然后用 hex（16 进制）解码一下，得到 `lue, far exceeds your belief}`。
+
+~~经过无厘头猜测，这个应该是 flag 的后半段，那前半段在哪呢？~~
+
+### LSB
+
+我知道你很急，但你先别急。题目里面提到的 LSB 还没用上呢。
+
+用 StegSolve.jar 打开原图，然后左右翻看。然后发现在 Red plane 0 里面（其实 Green 和 Blue 也有，而且是一样的），图片的左边有一串不明信息。
+
+![](Weak_Password_red_plane_0.png)
+
+然后用 Data Extract 功能，选中 Red 的 0，然后直接提取，就得到了 flag 的前半段：
+
+![](Weak_Password_data_extract.png)
+
+把 flag 拼接一下，就有：`ctfshow{Your potential,value, far exceeds your belief}`。再按照题目的要求处理一下，就得到了最终的 flag：`ctfshow{Your_potential_value_far_exceeds_your_belief}`。
+
+## 简单的隐写
+
+用上一题差不多的思路，用 StegSolve.jar 打开，发现 Red plane 1 的地方有一行不明信息。
+
+![](Simple_Forensics.png)
+
+但是并不能直接提取。~~如果直接提取的话，虽然能看到 `ctfshow{`，但是后面的内容不完全对~~。
+
+原因是这幅图用了调色板（palette）。即每一个像素，只记录一个颜色的编号，再用编号去调色板中得到相应的 RGB 颜色。
+
+然后隐写的信息是写在原始数据（即编号）里面的，而不是最终的 RGB 颜色，所以会出现一定的偏差。
+
+不过好在 Python 的 Pillow 库可以直接读取这个原始数据。直接用这个脚本读一下就行：
+
+``` python
+from PIL import Image
+
+image = Image.open('mumuzi.png')
+pixels = list(image.getdata())  # 获取的是原始数据
+binary = [ pixel % 2 for pixel in pixels[:400] ]  # 获取前 400 个像素的 LSB
+print(''.join(map(str, binary)))  # 打印
+```
+
+然后得到：
+
+```
+01100011011101000110011001110011011010000110111101110111011110110011010001100110011001000
+01100010011010001100001011001100011000000101101001100110011001001100011011001010010110100
+11010000110101001101000011001100101101001110010011010000110010001100000010110100110011011
+00110011000110110000100110101001110000110010100110100011000100011000100110101001101100111
+11010000000000000000000000000000000000000000
+```
+
+然后扔到 CyberChef 解码一下就能拿到 flag。
