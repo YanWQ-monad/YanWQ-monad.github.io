@@ -85,6 +85,8 @@ katex:
   css: false
 
 sitemap:
+  path:
+    - sitemap.xml
   tags: false
   categories: false
 
